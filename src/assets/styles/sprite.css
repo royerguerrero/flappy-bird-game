@@ -1,0 +1,11 @@
+.sprite {
+    position: relative;
+}
+
+.sprite--round {
+    border-radius: 16px;
+}
+
+.sprite--round-bottom {
+    border-radius: 0 0 16px 16px;
+}

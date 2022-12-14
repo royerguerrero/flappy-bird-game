@@ -1,0 +1,21 @@
+.command__button {
+    outline: none;
+    font-size: 21px;
+    background-color: transparent;
+    border: 3px solid green;
+    border-radius: 8px;
+    padding: 8px 16px;
+    min-width: 370px;
+    transition: 400ms color, 400ms background, 400ms border;
+    cursor: pointer;
+}
+
+.command__button:hover {
+    background-color: green;
+    border: 3px solid greenyellow;
+    color: greenyellow;
+}
+
+.command__button-start {
+    justify-self: flex-start;
+}

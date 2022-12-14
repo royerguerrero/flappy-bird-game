@@ -1,0 +1,20 @@
+.game {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  width: 100%;
+  height: 100vh;
+  gap: 30px;
+}
+
+.game__board {
+  border-radius: 16px;
+}
+
+.game__board_actions {
+  width: 90vw;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
