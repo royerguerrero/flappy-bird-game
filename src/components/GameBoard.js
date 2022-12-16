@@ -2,8 +2,10 @@ import React from 'react'
 
 const GameBoard = (props) => {
   const gameBoardStyles = {
-    height: props.height + '%',
-    width: props.width + '%',
+    minHeight: props.height + '%',
+    maxHeight: props.height + '%',
+    minWidth: props.width + '%',
+    maxWidth: props.width + '%',
   }
   return (
     <div className='game__board' style={gameBoardStyles}>

@@ -1,5 +1,6 @@
 .sprite {
-    position: relative;
+    position: absolute;
+    text-align: center;
 }
 
 .sprite--round {
@@ -8,4 +9,18 @@
 
 .sprite--round-bottom {
     border-radius: 0 0 16px 16px;
+}
+
+.sprite--label {
+    border-radius: 8px;
+    color: white;
+    font-size: 26px;
+    padding: 10px 0px;
+}
+
+.sprite--column {
+    display: grid;
+    align-items: center;
+    color: white;
+    font-size: 23px;
 }
