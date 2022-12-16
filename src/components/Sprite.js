@@ -17,8 +17,8 @@ const Sprite = ({
     width: width,
     backgroundRepeatX: repeatTextureInX ? 'repeat' : 'no-repeat',
     backgroundRepeatY: repeatTextureInY ? 'repeat' : 'no-repeat',
-    top: `${positionY <= 20 ? positionY : positionY - 20}%`, // TODO: Change this hardcode to a offsetParent
-    left: `${positionX <= 10 ? positionX : positionX - 10}%`, // TODO: Change this hardcode to a offsetParent
+    top: positionY,
+    left: positionX,
   }
   return (
     <div className={`sprite ${className}`} style={spriteStyles}>

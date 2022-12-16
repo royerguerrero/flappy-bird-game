@@ -1,15 +1,17 @@
 import React from 'react'
 
-const GameBoard = (props) => {
+const GameBoard = ({
+  children,
+  height,
+  width,
+}) => {
   const gameBoardStyles = {
-    minHeight: props.height + '%',
-    maxHeight: props.height + '%',
-    minWidth: props.width + '%',
-    maxWidth: props.width + '%',
+    height: height + 'px',
+    width: width + 'px',
   }
   return (
     <div className='game__board' style={gameBoardStyles}>
-      {props.children}
+      {children}
     </div>
   )
 }
