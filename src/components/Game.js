@@ -13,12 +13,11 @@ import '../assets/styles/game.css';
 const Game = () => {
   const gameBoardHeight = 80
   const gameBoardWidth = 90
+  const GRAVITY = 6
 
-  const [birdPositionX, setBirdPositionX] = useState(5)
   const [birdPositionY, setBirdPositionY] = useState(67)
-
+  const [columnsPosition, setColumnsPosition] = useState(100)
   const [gameStatus, setGameStatus] = useState(false)
-
   const [options, setOptions] = useState(undefined)
 
   useEffect(() => {
@@ -34,11 +33,19 @@ const Game = () => {
 
   const [currentOption, setCurrentOption] = useState(undefined)
 
+  useEffect(() => {
+    if (gameStatus) {
+      setInterval(() => {
+        setBirdPositionY(birdPositionY + 1)
+        setColumnsPosition(columnsPosition - 1)
+      }, 100)
+    }
+  }, [gameStatus, birdPositionY, columnsPosition])
+
   const handleStartGame = () => {
     // TODO: Reset the game 
 
     if (options !== undefined && options.length >= 1) {
-      console.log(options[0])
       setCurrentOption(options[0])
     }
 
@@ -61,37 +68,36 @@ const Game = () => {
             width='50px'
             repeatTextureInX={false}
             repeatTextureInY={false}
-            positionX={birdPositionX}
+            positionX={5}
             positionY={birdPositionY}
           >
             Bird
           </Sprite>
           {
             gameStatus &&
-            <Sprite
-              className='sprite--column'
-              texture={['#008000ab']}
-              width='100px'
-              height='44%'
-              positionX={100}
-            >
-              {currentOption.conjugation}
-            </Sprite>
-          }
-          {
-            gameStatus &&
-            <Sprite
-              className='sprite--column'
-              texture={['#ff0000ab']}
-              width='100px'
-              height='44%'
-              positionX={100}
-              positionY={67}
-            >
-              {
-                currentOption[`wrong${Math.floor(Math.random() * 2) + 1}`]
-              }
-            </Sprite>
+            <React.Fragment>
+              <Sprite
+                className='sprite--column'
+                texture={['#008000ab']}
+                width='100px'
+                height='44%'
+                positionX={columnsPosition}
+              >
+                {currentOption.conjugation}
+              </Sprite>
+              <Sprite
+                className='sprite--column'
+                texture={['#ff0000ab']}
+                width='100px'
+                height='44%'
+                positionX={columnsPosition}
+                positionY={67}
+              >
+                {
+                  currentOption[`wrong${Math.floor(Math.random() * 2) + 1}`]
+                }
+              </Sprite>
+            </React.Fragment>
           }
           <Sprite
             className='sprite--round-bottom'
@@ -106,13 +112,16 @@ const Game = () => {
         </Sprite>
       </GameBoard>
       <section className='game__board_actions'>
-        <Command>
-          <button className='command__button command__button-start' onClick={handleStartGame}>
-            {gameStatus ? 'Start' : 'Play Again'}
-          </button>
-        </Command>
+        {
+          !gameStatus ?
+            <Command>
+              <button className='command__button command__button-start' onClick={handleStartGame}>Start</button>
+            </Command> :
+            <Score>
+              <h2 className='score__label'>Score: 2</h2>
+            </Score>
+        }
         <Score>
-          <h2 className='score__label'>Score: 2</h2>
           <h2 className='score__label'>High Score: 5</h2>
         </Score>
       </section>
