@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useReducer } from 'react'
+import React, { useState, useEffect } from 'react'
 
 import GameBoard from './GameBoard'
 import Sprite from './Sprite'
@@ -10,7 +10,7 @@ import ground from '../assets/sprites/ground.svg'
 import bird from '../assets/sprites/bird.svg'
 import '../assets/styles/game.css';
 
-const Game = () => {
+const Game = ({options}) => {
   const gameBoardHeight = 497
   const gameBoardWidth = 1000
   const groundHeight = 93
@@ -25,19 +25,13 @@ const Game = () => {
   const [score, setScore] = useState(0)
   const [highScore, setHighScore] = useState(0)
   const [correctAnswerInTop, setCorrectAnswerInTop] = useState(Math.random() < 0.5)
-
-  // useEffect(() => {
-  //   (async function () {
-  //     let url = 'https://api.sheety.co/51a168542b4a389d29f885a281010b31/french1/pilot';
-  //     fetch(url)
-  //       .then((response) => response.json())
-  //       .then(json => {
-  //         setOptions(json.pilot)
-  //       });
-  //   }())
-  // }, [])
+  const [currentOption, setCurrentOption] = useState()
 
   useEffect(() => {
+    if (currentOption === undefined) {
+      setCurrentOption(options[Math.floor(Math.random() * options.length)])
+    }
+
     if (gameStatus) {
       let timeId;
       timeId = setInterval(() => {
@@ -50,7 +44,7 @@ const Game = () => {
           const threshold = columnsDifference > 0
             ? columnsHeight + Math.abs(columnsDifference)
             : columnsHeight - Math.abs(columnsDifference)
-            
+
           if (
             columnsPosition === 130 + 50 + 90
             &&
@@ -86,6 +80,7 @@ const Game = () => {
             ))
             setCorrectAnswerInTop(Math.random() < 0.5)
             setColumnsPosition(gameBoardWidth)
+            setCurrentOption(options[Math.floor(Math.random() * options.length)])
           }
         } else {
           setGameStatus(false)
@@ -93,12 +88,13 @@ const Game = () => {
       }, 20);
       return () => clearInterval(timeId);
     } else {
+      setScore(0)
       setBirdPositionY(groundPositionY / 2)
       setColumnsPosition(gameBoardWidth)
     }
   }, [
-    gameStatus, birdPositionY, groundPositionY, columnsPosition,
-    columnsDifference, columnsHeight, correctAnswerInTop
+    gameStatus, birdPositionY, groundPositionY, columnsPosition, currentOption,
+    columnsDifference, columnsHeight, correctAnswerInTop, score, highScore, options
   ]);
 
   const handleClick = () => {
@@ -113,8 +109,7 @@ const Game = () => {
             gameStatus &&
             <React.Fragment>
               <Sprite className='sprite--label' texture={['#E6611D']} width='50%' positionY={20} positionX={gameBoardWidth / 4}>
-                {/* {currentOption.pronoun}({currentOption.time}) */}
-                JE(PRÉSENT)
+                {currentOption.pronoun}({currentOption.time})
               </Sprite>
               <Sprite
                 texture={[`url('${bird}')`]}
@@ -125,7 +120,6 @@ const Game = () => {
                 positionX={130}
                 positionY={birdPositionY}
               >
-                Bird
               </Sprite>
               <Sprite
                 className='sprite--column'
@@ -134,8 +128,7 @@ const Game = () => {
                 height={columnsDifference > 0 ? columnsHeight + Math.abs(columnsDifference) : columnsHeight - Math.abs(columnsDifference)}
                 positionX={columnsPosition - 110}
               >
-                {/* {currentOption.conjugation} */}
-                {correctAnswerInTop ? 'SUIS' : 'SUI'}
+                {correctAnswerInTop ? currentOption.conjugation : currentOption[`wrong${Math.floor(Math.random() * 2) + 1}`]}
               </Sprite>
               <Sprite
                 className='sprite--column'
@@ -145,8 +138,7 @@ const Game = () => {
                 positionX={columnsPosition - 110}
                 positionY={columnsDifference > 0 ? columnsHeight + Math.abs(columnsDifference) : columnsHeight - Math.abs(columnsDifference)}
               >
-                {/* {currentOption[`wrong${Math.floor(Math.random() * 2) + 1}`]} */}
-                {!correctAnswerInTop ? 'SUIS' : 'SUI'}
+                {correctAnswerInTop ? currentOption.conjugation : currentOption[`wrong${Math.floor(Math.random() * 2) + 1}`]}
               </Sprite>
             </React.Fragment>
           }
@@ -158,7 +150,6 @@ const Game = () => {
             width='100%'
             positionY={groundPositionY}
           >
-            Ground
           </Sprite>
         </Sprite>
       </GameBoard>
