@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 
 import GameBoard from './GameBoard'
 import Sprite from './Sprite'
@@ -10,7 +10,7 @@ import ground from '../assets/sprites/ground.svg'
 import bird from '../assets/sprites/bird.svg'
 import '../assets/styles/game.css';
 
-const Game = ({options}) => {
+const Game = ({ options }) => {
   const gameBoardHeight = 497
   const gameBoardWidth = 1000
   const groundHeight = 93
@@ -25,13 +25,11 @@ const Game = ({options}) => {
   const [score, setScore] = useState(0)
   const [highScore, setHighScore] = useState(0)
   const [correctAnswerInTop, setCorrectAnswerInTop] = useState(Math.random() < 0.5)
-  const [currentOption, setCurrentOption] = useState()
+  const [currentOption, setCurrentOption] = useState(options[Math.floor(Math.random() * options.length)])
+  const [wrongAnswer, setWrongAnswer] = useState(currentOption[`wrong${Math.floor(Math.random() * 2) + 1}`])
+  const audioRef = useRef(null)
 
   useEffect(() => {
-    if (currentOption === undefined) {
-      setCurrentOption(options[Math.floor(Math.random() * options.length)])
-    }
-
     if (gameStatus) {
       let timeId;
       timeId = setInterval(() => {
@@ -45,34 +43,23 @@ const Game = ({options}) => {
             ? columnsHeight + Math.abs(columnsDifference)
             : columnsHeight - Math.abs(columnsDifference)
 
-          if (
-            columnsPosition === 130 + 50 + 90
-            &&
-            (
-              (!correctAnswerInTop && birdPositionY > threshold)
-              ||
-              (correctAnswerInTop && birdPositionY < threshold)
-            )
-          ) {
-            // GAME OVER
-            setGameStatus(false)
-          } else if (
-            columnsPosition === 130 + 50 + 90
-            &&
-            (
-              (!correctAnswerInTop && birdPositionY < threshold)
-              ||
+          if (columnsPosition === 130 + 50 + 90) {
+            if (
               (correctAnswerInTop && birdPositionY > threshold)
-            )
-          ) {
-            // TODO: solve this bug
-            setScore(score => score + 1)
-            if (highScore < score) {
-              setHighScore(score)
+              ||
+              (!correctAnswerInTop && birdPositionY < threshold)
+            ) {
+              setGameStatus(false)
+            } else {
+              audioRef.current.play()
+              setScore(score => score + 1)
+              if (highScore <= score) {
+                setHighScore(score + 1)
+              }
             }
           }
 
-          if (columnsPosition > 130) {
+          if (columnsPosition > 110) {
             setColumnsPosition(columnsPosition => columnsPosition - 5)
           } else {
             setColumnsDifference(Math.floor(
@@ -81,6 +68,7 @@ const Game = ({options}) => {
             setCorrectAnswerInTop(Math.random() < 0.5)
             setColumnsPosition(gameBoardWidth)
             setCurrentOption(options[Math.floor(Math.random() * options.length)])
+            setWrongAnswer(currentOption[`wrong${Math.floor(Math.random() * 2) + 1}`])
           }
         } else {
           setGameStatus(false)
@@ -123,22 +111,22 @@ const Game = ({options}) => {
               </Sprite>
               <Sprite
                 className='sprite--column'
-                texture={[(correctAnswerInTop ? '#ff0000ab' : '#008000ab')]}
+                texture={[(correctAnswerInTop ? '#008000ab' : '#ff0000ab')]}
                 width='90px'
                 height={columnsDifference > 0 ? columnsHeight + Math.abs(columnsDifference) : columnsHeight - Math.abs(columnsDifference)}
                 positionX={columnsPosition - 110}
               >
-                {correctAnswerInTop ? currentOption.conjugation : currentOption[`wrong${Math.floor(Math.random() * 2) + 1}`]}
+                {correctAnswerInTop ? currentOption.conjugation : wrongAnswer}
               </Sprite>
               <Sprite
                 className='sprite--column'
-                texture={[(!correctAnswerInTop ? '#ff0000ab' : '#008000ab')]}
+                texture={[(!correctAnswerInTop ? '#008000ab' : '#ff0000ab')]}
                 width='90px'
                 height={columnsDifference > 0 ? columnsHeight - Math.abs(columnsDifference) : columnsHeight + Math.abs(columnsDifference)}
                 positionX={columnsPosition - 110}
                 positionY={columnsDifference > 0 ? columnsHeight + Math.abs(columnsDifference) : columnsHeight - Math.abs(columnsDifference)}
               >
-                {correctAnswerInTop ? currentOption.conjugation : currentOption[`wrong${Math.floor(Math.random() * 2) + 1}`]}
+                {!correctAnswerInTop ? currentOption.conjugation : wrongAnswer}
               </Sprite>
             </React.Fragment>
           }
@@ -166,6 +154,7 @@ const Game = ({options}) => {
         <Score>
           <h2 className='score__label'>High Score: {highScore}</h2>
         </Score>
+        <audio ref={audioRef} src={currentOption.audio} />
       </section>
     </main>
   )
