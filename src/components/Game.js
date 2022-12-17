@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useReducer } from 'react'
 
 import GameBoard from './GameBoard'
 import Sprite from './Sprite'
@@ -17,23 +17,25 @@ const Game = () => {
   const groundPositionY = gameBoardHeight - groundHeight
   const jumpSize = 60
   const columnsHeight = (gameBoardHeight - groundHeight) / 2
-  const columnsDifference = 30
 
   const [birdPositionY, setBirdPositionY] = useState(groundPositionY / 2)
   const [columnsPosition, setColumnsPosition] = useState(gameBoardWidth)
   const [gameStatus, setGameStatus] = useState(false)
-  const [options, setOptions] = useState({})
+  const [columnsDifference, setColumnsDifference] = useState(0)
+  const [score, setScore] = useState(0)
+  const [highScore, setHighScore] = useState(0)
+  const [correctAnswerInTop, setCorrectAnswerInTop] = useState(Math.random() < 0.5)
 
-  useEffect(() => {
-    (async function () {
-      let url = 'https://api.sheety.co/51a168542b4a389d29f885a281010b31/french1/pilot';
-      fetch(url)
-        .then((response) => response.json())
-        .then(json => {
-          setOptions(json.pilot)
-        });
-    }())
-  }, [])
+  // useEffect(() => {
+  //   (async function () {
+  //     let url = 'https://api.sheety.co/51a168542b4a389d29f885a281010b31/french1/pilot';
+  //     fetch(url)
+  //       .then((response) => response.json())
+  //       .then(json => {
+  //         setOptions(json.pilot)
+  //       });
+  //   }())
+  // }, [])
 
   useEffect(() => {
     if (gameStatus) {
@@ -44,10 +46,45 @@ const Game = () => {
           &&
           (birdPositionY >= 0)
         ) {
-          // setBirdPositionY(birdPositionY => birdPositionY + 3)
-          if (columnsPosition >= 130) {
-            setColumnsPosition(columnsPosition => columnsPosition - 2)
+          setBirdPositionY(birdPositionY => birdPositionY + 3)
+          const threshold = columnsDifference > 0
+            ? columnsHeight + Math.abs(columnsDifference)
+            : columnsHeight - Math.abs(columnsDifference)
+            
+          if (
+            columnsPosition === 130 + 50 + 90
+            &&
+            (
+              (!correctAnswerInTop && birdPositionY > threshold)
+              ||
+              (correctAnswerInTop && birdPositionY < threshold)
+            )
+          ) {
+            // GAME OVER
+            setGameStatus(false)
+          } else if (
+            columnsPosition === 130 + 50 + 90
+            &&
+            (
+              (!correctAnswerInTop && birdPositionY < threshold)
+              ||
+              (correctAnswerInTop && birdPositionY > threshold)
+            )
+          ) {
+            // TODO: solve this bug
+            setScore(score => score + 1)
+            if (highScore < score) {
+              setHighScore(score)
+            }
+          }
+
+          if (columnsPosition > 130) {
+            setColumnsPosition(columnsPosition => columnsPosition - 5)
           } else {
+            setColumnsDifference(Math.floor(
+              Math.random() * ((columnsHeight / 2) - -(columnsHeight / 2)) + -(columnsHeight / 2)
+            ))
+            setCorrectAnswerInTop(Math.random() < 0.5)
             setColumnsPosition(gameBoardWidth)
           }
         } else {
@@ -59,7 +96,10 @@ const Game = () => {
       setBirdPositionY(groundPositionY / 2)
       setColumnsPosition(gameBoardWidth)
     }
-  }, [gameStatus, birdPositionY, groundPositionY, columnsPosition]);
+  }, [
+    gameStatus, birdPositionY, groundPositionY, columnsPosition,
+    columnsDifference, columnsHeight, correctAnswerInTop
+  ]);
 
   const handleClick = () => {
     setBirdPositionY((birdPositionY) => birdPositionY - jumpSize)
@@ -89,24 +129,24 @@ const Game = () => {
               </Sprite>
               <Sprite
                 className='sprite--column'
-                texture={['#008000ab']}
+                texture={[(correctAnswerInTop ? '#ff0000ab' : '#008000ab')]}
                 width='90px'
-                height={columnsHeight}
+                height={columnsDifference > 0 ? columnsHeight + Math.abs(columnsDifference) : columnsHeight - Math.abs(columnsDifference)}
                 positionX={columnsPosition - 110}
               >
                 {/* {currentOption.conjugation} */}
-                SUIS
+                {correctAnswerInTop ? 'SUIS' : 'SUI'}
               </Sprite>
               <Sprite
                 className='sprite--column'
-                texture={['#ff0000ab']}
+                texture={[(!correctAnswerInTop ? '#ff0000ab' : '#008000ab')]}
                 width='90px'
-                height={columnsHeight}
+                height={columnsDifference > 0 ? columnsHeight - Math.abs(columnsDifference) : columnsHeight + Math.abs(columnsDifference)}
                 positionX={columnsPosition - 110}
-                positionY={columnsHeight}
+                positionY={columnsDifference > 0 ? columnsHeight + Math.abs(columnsDifference) : columnsHeight - Math.abs(columnsDifference)}
               >
                 {/* {currentOption[`wrong${Math.floor(Math.random() * 2) + 1}`]} */}
-                SUI
+                {!correctAnswerInTop ? 'SUIS' : 'SUI'}
               </Sprite>
             </React.Fragment>
           }
@@ -129,11 +169,11 @@ const Game = () => {
               <button className='command__button command__button-start' onClick={() => setGameStatus(true)}>Start</button>
             </Command> :
             <Score>
-              <h2 className='score__label'>Score: 2</h2>
+              <h2 className='score__label'>Score: {score}</h2>
             </Score>
         }
         <Score>
-          <h2 className='score__label'>High Score: 5</h2>
+          <h2 className='score__label'>High Score: {highScore}</h2>
         </Score>
       </section>
     </main>
