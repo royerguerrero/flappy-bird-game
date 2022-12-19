@@ -86,11 +86,14 @@ const Game = ({ options }) => {
   ])
 
   useEffect(() => {
-    window.addEventListener('keydown', event => {event.key === ' ' && handleClick() })
+    window.addEventListener('keydown', event => { event.key === ' ' && handleClick() })
   }, [])
 
   const handleClick = () => {
-    setBirdPositionY((birdPositionY) => birdPositionY - jumpSize)
+    setBirdPositionY(birdPositionY => {
+      const newBirdPositionY = birdPositionY - jumpSize
+      return newBirdPositionY > 0 ? newBirdPositionY : 0
+    })
   }
 
   return (
