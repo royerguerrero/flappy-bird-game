@@ -83,7 +83,11 @@ const Game = ({ options }) => {
   }, [
     gameStatus, birdPositionY, groundPositionY, columnsPosition, currentOption,
     columnsDifference, columnsHeight, correctAnswerInTop, score, highScore, options
-  ]);
+  ])
+
+  useEffect(() => {
+    window.addEventListener('keydown', event => {event.key === ' ' && handleClick() })
+  }, [])
 
   const handleClick = () => {
     setBirdPositionY((birdPositionY) => birdPositionY - jumpSize)
