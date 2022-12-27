@@ -10,6 +10,8 @@ import ground from '../assets/sprites/ground.svg'
 import bird from '../assets/sprites/bird.svg'
 import '../assets/styles/game.css';
 
+import { chooseOption, generateUUID } from '../utils'
+
 const Game = ({ options }) => {
   const gameBoardHeight = 497
   const gameBoardWidth = 1000
@@ -17,6 +19,7 @@ const Game = ({ options }) => {
   const groundPositionY = gameBoardHeight - groundHeight
   const jumpSize = 60
   const columnsHeight = (gameBoardHeight - groundHeight) / 2
+  const birdPositionX = 150
 
   const [birdPositionY, setBirdPositionY] = useState(groundPositionY / 2)
   const [columnsPosition, setColumnsPosition] = useState(gameBoardWidth)
@@ -27,6 +30,18 @@ const Game = ({ options }) => {
   const [correctAnswerInTop, setCorrectAnswerInTop] = useState(Math.random() < 0.5)
   const [currentOption, setCurrentOption] = useState(options[Math.floor(Math.random() * options.length)])
   const [wrongAnswer, setWrongAnswer] = useState(currentOption[`wrong${Math.floor(Math.random() * 2) + 1}`])
+  const [user, setUser] = useState({
+    id: generateUUID(),
+    options: {
+      [currentOption.id2]: {
+        id: currentOption.id2,
+        level: currentOption.level,
+        right: 1,
+        wrong: 1,
+        fraction: 1,
+      }
+    }
+  })
   const audioRef = useRef(null)
 
   useEffect(() => {
@@ -43,12 +58,24 @@ const Game = ({ options }) => {
             ? columnsHeight + Math.abs(columnsDifference)
             : columnsHeight - Math.abs(columnsDifference)
 
-          if (columnsPosition === 130 + 50 + 90) {
+          if (columnsPosition === birdPositionX + 50 + 90) {
             if (
               (correctAnswerInTop && birdPositionY > threshold)
               ||
               (!correctAnswerInTop && birdPositionY < threshold)
             ) {
+              const currentUserOption = user.options[currentOption.id2]
+              currentUserOption.wrong += 1
+              setUser(prevUser => ({
+                ...prevUser,
+                options: {
+                  ...prevUser.options,
+                  [currentOption.id2]: {
+                    ...currentUserOption
+                  }
+                },
+                lastWrong: currentOption.id2
+              }))
               setGameStatus(false)
             } else {
               audioRef.current.play()
@@ -67,7 +94,7 @@ const Game = ({ options }) => {
             ))
             setCorrectAnswerInTop(Math.random() < 0.5)
             setColumnsPosition(gameBoardWidth)
-            setCurrentOption(options[Math.floor(Math.random() * options.length)])
+            setCurrentOption(currentOption => chooseOption(currentOption, options, setUser))
             setWrongAnswer(currentOption[`wrong${Math.floor(Math.random() * 2) + 1}`])
           }
         } else {
@@ -81,7 +108,7 @@ const Game = ({ options }) => {
       setColumnsPosition(gameBoardWidth)
     }
   }, [
-    gameStatus, birdPositionY, groundPositionY, columnsPosition, currentOption,
+    gameStatus, birdPositionY, groundPositionY, columnsPosition, currentOption, user,
     columnsDifference, columnsHeight, correctAnswerInTop, score, highScore, options
   ])
 
@@ -112,7 +139,7 @@ const Game = ({ options }) => {
                 width='50px'
                 repeatTextureInX={false}
                 repeatTextureInY={false}
-                positionX={130}
+                positionX={birdPositionX}
                 positionY={birdPositionY}
               >
               </Sprite>

@@ -6,7 +6,6 @@ const GameWrapper = () => {
   const [data, setData] = useState(null)
   const [callAPI, setCallAPI] = useState(true)
 
-  console.log(callAPI)
   useEffect(() => {
     if (callAPI) {
       (async function () {
