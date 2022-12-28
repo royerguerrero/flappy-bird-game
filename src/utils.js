@@ -1,12 +1,15 @@
-export const chooseOption = (lastOption, options, setUser) => {
-  const newOption = options[Math.floor(Math.random() * options.length)]
-  console.log(lastOption.pronounId)
-  console.log(newOption.pronounId)
-  console.log(Math.round(lastOption.pronounId) === Math.round(newOption.pronounId))
-  if (Math.round(lastOption.pronounId) === Math.round(newOption.pronounId)) {
-    return chooseOption(lastOption, options, setUser)
+export const chooseOption = (user, prevOption) => {
+  if (prevOption === undefined) {
+    const userOptionsKeys = Object.keys(user.options)
+    return user.options[userOptionsKeys[Math.floor(Math.random() * userOptionsKeys.length)]]
   }
-  return newOption 
+
+  const userOptionsValues = Object.values(user.options)
+  const min = userOptionsValues[0].nLow
+  const max = userOptionsValues[userOptionsValues.length - 1].nHigh
+  const randomNumber = Math.random() * (max - min) + min
+
+  return Object.entries(user.options).find(value => (value.nLow > randomNumber && value.nHigh < randomNumber))
 }
 
 export const generateUUID = () => {

@@ -25,3 +25,7 @@
     color: white;
     font-size: 23px;
 }
+
+.sprite--extend-texture {
+    background-size: cover !important;
+}

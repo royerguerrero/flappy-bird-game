@@ -5,9 +5,6 @@ import Sprite from './Sprite'
 import Command from './Command'
 import Score from './Score'
 
-import cityBackground from '../assets/sprites/city-background.svg'
-import ground from '../assets/sprites/ground.svg'
-import bird from '../assets/sprites/bird.svg'
 import '../assets/styles/game.css';
 
 import { chooseOption, generateUUID } from '../utils'
@@ -15,33 +12,37 @@ import { chooseOption, generateUUID } from '../utils'
 const Game = ({ options }) => {
   const gameBoardHeight = 497
   const gameBoardWidth = 1000
-  const groundHeight = 93
-  const groundPositionY = gameBoardHeight - groundHeight
   const jumpSize = 60
-  const columnsHeight = (gameBoardHeight - groundHeight) / 2
+  const columnsHeight = gameBoardHeight / 2
+  const columnsWidth = 90
   const birdPositionX = 150
+  const birdWidth = 75
 
-  const [birdPositionY, setBirdPositionY] = useState(groundPositionY / 2)
+  const [birdPositionY, setBirdPositionY] = useState(gameBoardHeight / 2)
   const [columnsPosition, setColumnsPosition] = useState(gameBoardWidth)
   const [gameStatus, setGameStatus] = useState(false)
   const [columnsDifference, setColumnsDifference] = useState(0)
   const [score, setScore] = useState(0)
   const [highScore, setHighScore] = useState(0)
   const [correctAnswerInTop, setCorrectAnswerInTop] = useState(Math.random() < 0.5)
-  const [currentOption, setCurrentOption] = useState(options[Math.floor(Math.random() * options.length)])
-  const [wrongAnswer, setWrongAnswer] = useState(currentOption[`wrong${Math.floor(Math.random() * 2) + 1}`])
+
   const [user, setUser] = useState({
     id: generateUUID(),
-    options: {
-      [currentOption.id2]: {
-        id: currentOption.id2,
-        level: currentOption.level,
+    options: Object.assign({}, ...options.map(option => ({
+      [option.id2]: {
+        ...option,
         right: 1,
         wrong: 1,
         fraction: 1,
+        nLow: 0,
+        nHigh: 1,
       }
-    }
+    }))),
+    lastWrong: undefined
   })
+
+  const [currentOption, setCurrentOption] = useState(chooseOption(user, undefined))
+  const [wrongAnswer, setWrongAnswer] = useState(currentOption[`wrong${Math.floor(Math.random() * 2) + 1}`])
   const audioRef = useRef(null)
 
   useEffect(() => {
@@ -49,7 +50,7 @@ const Game = ({ options }) => {
       let timeId;
       timeId = setInterval(() => {
         if (
-          (birdPositionY <= gameBoardHeight - groundHeight)
+          (birdPositionY <= gameBoardHeight - 30)
           &&
           (birdPositionY >= 0)
         ) {
@@ -58,26 +59,35 @@ const Game = ({ options }) => {
             ? columnsHeight + Math.abs(columnsDifference)
             : columnsHeight - Math.abs(columnsDifference)
 
-          if (columnsPosition === birdPositionX + 50 + 90) {
+          if (columnsPosition === birdPositionX + birdWidth + columnsWidth) {
             if (
               (correctAnswerInTop && birdPositionY > threshold)
               ||
               (!correctAnswerInTop && birdPositionY < threshold)
             ) {
-              const currentUserOption = user.options[currentOption.id2]
-              currentUserOption.wrong += 1
               setUser(prevUser => ({
                 ...prevUser,
                 options: {
                   ...prevUser.options,
                   [currentOption.id2]: {
-                    ...currentUserOption
+                    ...currentOption,
+                    wrong: currentOption.wrong + 1
                   }
                 },
                 lastWrong: currentOption.id2
               }))
               setGameStatus(false)
             } else {
+              setUser(prevUser => ({
+                ...prevUser,
+                options: {
+                  ...prevUser.options,
+                  [currentOption.id2]: {
+                    ...currentOption,
+                    right: currentOption.right + 1
+                  }
+                },
+              }))
               audioRef.current.play()
               setScore(score => score + 1)
               if (highScore <= score) {
@@ -94,7 +104,7 @@ const Game = ({ options }) => {
             ))
             setCorrectAnswerInTop(Math.random() < 0.5)
             setColumnsPosition(gameBoardWidth)
-            setCurrentOption(currentOption => chooseOption(currentOption, options, setUser))
+            setCurrentOption(prevCurrentOption => chooseOption(user, prevCurrentOption))
             setWrongAnswer(currentOption[`wrong${Math.floor(Math.random() * 2) + 1}`])
           }
         } else {
@@ -104,17 +114,53 @@ const Game = ({ options }) => {
       return () => clearInterval(timeId);
     } else {
       setScore(0)
-      setBirdPositionY(groundPositionY / 2)
+      setBirdPositionY(gameBoardHeight / 2)
       setColumnsPosition(gameBoardWidth)
     }
   }, [
-    gameStatus, birdPositionY, groundPositionY, columnsPosition, currentOption, user,
-    columnsDifference, columnsHeight, correctAnswerInTop, score, highScore, options
+    gameStatus, birdPositionY, columnsPosition, currentOption, user, options,
+    columnsDifference, columnsHeight, correctAnswerInTop, score, highScore,
   ])
 
   useEffect(() => {
     window.addEventListener('keydown', event => { event.key === ' ' && handleClick() })
   }, [])
+
+  useEffect(() => {
+    if (gameStatus) {
+      const nHighMax = Math.max(...Object.values(user.options).map(option => (option.nHigh)))
+      const recalculatedOptions = Object.assign(
+        {}, ...Object.entries(user.options).map(([key, value], index) => {
+          let prevValue = { nHigh: 0 }
+          if (index > 0) {
+            prevValue = Object.values(user.options)[index - 1]
+          }
+          const fraction = key === user.lastWrong
+            ? Math.round(value.wrong / value.right).toFixed(2)
+            : Math.round(nHighMax / 3.3).toFixed(2)
+
+          // console.table(key, value.lastWrong)
+          // console.warn(Math.round(value.wrong / value.right).toFixed(2))
+          // console.warn(Math.round(nHighMax / 3.3).toFixed(2))
+          const nLow = prevValue.nHigh
+          return {
+            [key]: {
+              ...value,
+              fraction: fraction,
+              nLow: nLow,
+              nHigh: fraction + nLow
+            }
+          }
+        })
+      )
+      console.log(recalculatedOptions)
+      debugger
+      // setUser(prevUser => ({
+      //   ...prevUser,
+      //   options: recalculatedOptions
+      // }))
+    }
+  }, [user, gameStatus])
 
   const handleClick = () => {
     setBirdPositionY(birdPositionY => {
@@ -126,7 +172,12 @@ const Game = ({ options }) => {
   return (
     <main className='game' onClick={handleClick}>
       <GameBoard height={gameBoardHeight} width={gameBoardWidth} >
-        <Sprite className='sprite--round' texture={[`url('${cityBackground}')`]} height='100%' width='100%'>
+        <Sprite
+          className='sprite--round sprite--extend-texture'
+          texture={[`url('https://res.cloudinary.com/kaiserberge/image/upload/v1672181099/samples/test/parisbg1.jpg')`]}
+          height='100%'
+          width='100%'
+        >
           {
             gameStatus &&
             <React.Fragment>
@@ -134,9 +185,10 @@ const Game = ({ options }) => {
                 {currentOption.pronoun}({currentOption.time})
               </Sprite>
               <Sprite
-                texture={[`url('${bird}')`]}
-                height='38px'
-                width='50px'
+                className='sprite--extend-texture'
+                texture={[`url('https://res.cloudinary.com/kaiserberge/image/upload/v1671554006/samples/test/bird.png')`]}
+                height='50px'
+                width={`${birdWidth}px`}
                 repeatTextureInX={false}
                 repeatTextureInY={false}
                 positionX={birdPositionX}
@@ -155,7 +207,7 @@ const Game = ({ options }) => {
               <Sprite
                 className='sprite--column'
                 texture={[(!correctAnswerInTop ? '#008000ab' : '#ff0000ab')]}
-                width='90px'
+                width={`${columnsWidth}px`}
                 height={columnsDifference > 0 ? columnsHeight - Math.abs(columnsDifference) : columnsHeight + Math.abs(columnsDifference)}
                 positionX={columnsPosition - 110}
                 positionY={columnsDifference > 0 ? columnsHeight + Math.abs(columnsDifference) : columnsHeight - Math.abs(columnsDifference)}
@@ -164,15 +216,6 @@ const Game = ({ options }) => {
               </Sprite>
             </React.Fragment>
           }
-          <Sprite
-            className='sprite--round-bottom'
-            texture={[`url(${ground})`]}
-            repeatTextureInY={false}
-            height={groundHeight}
-            width='100%'
-            positionY={groundPositionY}
-          >
-          </Sprite>
         </Sprite>
       </GameBoard>
       <section className='game__board_actions'>
