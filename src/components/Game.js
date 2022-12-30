@@ -7,7 +7,7 @@ import Score from './Score'
 
 import '../assets/styles/game.css';
 
-import { chooseOption, generateUUID } from '../utils'
+import { chooseOption, generateUUID, recalculateOptions } from '../utils'
 
 const Game = ({ options }) => {
   const gameBoardHeight = 497
@@ -28,17 +28,19 @@ const Game = ({ options }) => {
 
   const [user, setUser] = useState({
     id: generateUUID(),
-    options: Object.assign({}, ...options.map(option => ({
-      [option.id2]: {
-        ...option,
-        right: 1,
-        wrong: 1,
-        fraction: 1,
-        nLow: 0,
-        nHigh: 1,
+    options: Object.assign({}, ...options.map((option, index) => {
+      const nLow = index === 0 ? 0 : index
+      return {
+        [option.id2]: {
+          ...option,
+          right: 1,
+          wrong: 1,
+          fraction: 1,
+          nLow: nLow,
+          nHigh: nLow + 1,
+        }
       }
-    }))),
-    lastWrong: undefined
+    })),
   })
 
   const [currentOption, setCurrentOption] = useState(chooseOption(user, undefined))
@@ -67,27 +69,15 @@ const Game = ({ options }) => {
             ) {
               setUser(prevUser => ({
                 ...prevUser,
-                options: {
-                  ...prevUser.options,
-                  [currentOption.id2]: {
-                    ...currentOption,
-                    wrong: currentOption.wrong + 1
-                  }
-                },
-                lastWrong: currentOption.id2
+                options: recalculateOptions(currentOption, prevUser.options, true)
               }))
               setGameStatus(false)
             } else {
               setUser(prevUser => ({
                 ...prevUser,
-                options: {
-                  ...prevUser.options,
-                  [currentOption.id2]: {
-                    ...currentOption,
-                    right: currentOption.right + 1
-                  }
-                },
+                options: recalculateOptions(currentOption, prevUser.options, false)
               }))
+
               audioRef.current.play()
               setScore(score => score + 1)
               if (highScore <= score) {
@@ -104,7 +94,7 @@ const Game = ({ options }) => {
             ))
             setCorrectAnswerInTop(Math.random() < 0.5)
             setColumnsPosition(gameBoardWidth)
-            setCurrentOption(prevCurrentOption => chooseOption(user, prevCurrentOption))
+            setCurrentOption(chooseOption(user, currentOption))
             setWrongAnswer(currentOption[`wrong${Math.floor(Math.random() * 2) + 1}`])
           }
         } else {
@@ -126,41 +116,32 @@ const Game = ({ options }) => {
     window.addEventListener('keydown', event => { event.key === ' ' && handleClick() })
   }, [])
 
-  useEffect(() => {
-    if (gameStatus) {
-      const nHighMax = Math.max(...Object.values(user.options).map(option => (option.nHigh)))
-      const recalculatedOptions = Object.assign(
-        {}, ...Object.entries(user.options).map(([key, value], index) => {
-          let prevValue = { nHigh: 0 }
-          if (index > 0) {
-            prevValue = Object.values(user.options)[index - 1]
-          }
-          const fraction = key === user.lastWrong
-            ? Math.round(value.wrong / value.right).toFixed(2)
-            : Math.round(nHighMax / 3.3).toFixed(2)
+  // useEffect(() => {
+  //   if (gameStatus) {
+  //     debugger
+  //     // const nHighMax = Math.max(...Object.values(user.options).map(option => (option.nHigh)))
 
-          // console.table(key, value.lastWrong)
-          // console.warn(Math.round(value.wrong / value.right).toFixed(2))
-          // console.warn(Math.round(nHighMax / 3.3).toFixed(2))
-          const nLow = prevValue.nHigh
-          return {
-            [key]: {
-              ...value,
-              fraction: fraction,
-              nLow: nLow,
-              nHigh: fraction + nLow
-            }
-          }
-        })
-      )
-      console.log(recalculatedOptions)
-      debugger
-      // setUser(prevUser => ({
-      //   ...prevUser,
-      //   options: recalculatedOptions
-      // }))
-    }
-  }, [user, gameStatus])
+  //     // const recalculatedOptions = {}
+  //     // for (const [index, [key, value]] of Object.entries(user.options).entries()) {
+  //     //   const fraction = key === user.lastWrong
+  //     //     ? Math.round(nHighMax / 3.3 * 100) / 100
+  //     //     : Math.round(value.wrong / value.right * 100) / 100
+  //     //   // const nLow = index > 0 ? recalculatedOptions[index - 1].nHigh : 0
+  //     //   const nLow = 0
+  //     //   recalculatedOptions[key] = {
+  //     //     ...value,
+  //     //     fraction: fraction,
+  //     //     nLow: nLow,
+  //     //     nHigh: fraction + nLow,
+  //     //   }
+  //     // }
+
+  //     // setUser(prevUser => ({
+  //     //   ...prevUser,
+  //     //   options: recalculatedOptions
+  //     // }))
+  //   }
+  // }, [user, gameStatus])
 
   const handleClick = () => {
     setBirdPositionY(birdPositionY => {
