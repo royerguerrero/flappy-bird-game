@@ -7,7 +7,7 @@ import Score from './Score'
 
 import '../assets/styles/game.css';
 
-import { chooseOption, generateUUID, recalculateOptions } from '../utils'
+import { chooseOption, generateUUID, recalculateOptions, logUserData} from '../utils'
 
 const Game = ({ options }) => {
   const gameBoardHeight = 497
@@ -84,6 +84,8 @@ const Game = ({ options }) => {
                 setHighScore(score + 1)
               }
             }
+
+            logUserData(user)
           }
 
           if (columnsPosition > 110) {
@@ -115,33 +117,6 @@ const Game = ({ options }) => {
   useEffect(() => {
     window.addEventListener('keydown', event => { event.key === ' ' && handleClick() })
   }, [])
-
-  // useEffect(() => {
-  //   if (gameStatus) {
-  //     debugger
-  //     // const nHighMax = Math.max(...Object.values(user.options).map(option => (option.nHigh)))
-
-  //     // const recalculatedOptions = {}
-  //     // for (const [index, [key, value]] of Object.entries(user.options).entries()) {
-  //     //   const fraction = key === user.lastWrong
-  //     //     ? Math.round(nHighMax / 3.3 * 100) / 100
-  //     //     : Math.round(value.wrong / value.right * 100) / 100
-  //     //   // const nLow = index > 0 ? recalculatedOptions[index - 1].nHigh : 0
-  //     //   const nLow = 0
-  //     //   recalculatedOptions[key] = {
-  //     //     ...value,
-  //     //     fraction: fraction,
-  //     //     nLow: nLow,
-  //     //     nHigh: fraction + nLow,
-  //     //   }
-  //     // }
-
-  //     // setUser(prevUser => ({
-  //     //   ...prevUser,
-  //     //   options: recalculatedOptions
-  //     // }))
-  //   }
-  // }, [user, gameStatus])
 
   const handleClick = () => {
     setBirdPositionY(birdPositionY => {

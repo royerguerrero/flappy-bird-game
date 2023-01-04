@@ -22,16 +22,10 @@ export const generateUUID = () => {
 }
 
 export const recalculateOptions = (currentOption, options, failed) => {
-  console.table(options)
-  console.warn(currentOption.id2)
   const nHighMax = Math.max(...Object.values(options).map(option => (option.nHigh)))
 
   const newOptions = {}
   for (const [index, [key, value]] of Object.entries(options).entries()) {
-    if (key === currentOption.id2) {
-      console.log(index)
-    }
-
     if (failed && currentOption.id2 === key) {
       value.wrong = value.wrong + 1
     } else if (!failed && currentOption.id2 === key) {
@@ -49,7 +43,37 @@ export const recalculateOptions = (currentOption, options, failed) => {
       nHigh: fraction + nLow,
     }
   }
-  console.table(newOptions)
 
   return newOptions
+}
+
+export const logUserData = user => {
+  const userOptions = Object.values(user.options)
+  for (let i = 0; i <= userOptions.length; i++) {
+    const url = `https://api.sheety.co/51a168542b4a389d29f885a281010b31/french1/user/${i}`
+    const body = {
+      user: {
+        'user': user.id,
+        'id2': userOptions[i]['id2'],
+        'level': userOptions[i]['level'],
+        'right': userOptions[i]['right'],
+        'wrong': userOptions[i]['wrong'],
+        'fraction': userOptions[i]['fraction'],
+        'nLow': userOptions[i]['nLow'],
+        'nHigh': userOptions[i]['nHigh']
+      }
+    }
+    fetch(url, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+      mode: 'cors',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+      .then((response) => response.json())
+      .then((json) => {
+        console.log(json.user)
+      })
+  }
 }
