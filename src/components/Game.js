@@ -85,7 +85,7 @@ const Game = ({ options }) => {
               }
             }
 
-            logUserData(user)
+            // logUserData(user)
           }
 
           if (columnsPosition > 110) {
